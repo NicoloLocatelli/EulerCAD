@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Data, checkpoints and outputs: downloaded or produced by the commands, never committed
+data/
+runs/
+outputs/
+checkpoints/
+*.ckpt
+*.safetensors

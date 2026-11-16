@@ -1,0 +1,54 @@
+[project]
+name = "eulercad"
+version = "0.1.0"
+description = "A decoder pretrained on Euler walks of 2D CAD drawings, with layer-by-layer analysis of its representations."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Nicolo Locatelli" }]
+requires-python = ">=3.12"
+dependencies = [
+    "torch==2.14.0",
+    "lightning==2.6.6",
+    "transformers==5.17.0",
+    "torch-geometric==2.8.0.post1",
+    "torchao==0.18.0",
+    "nvidia-ml-py==13.610.43",
+    "numpy==2.5.3",
+    "polars==1.44.2",
+    "scipy==1.18.1",
+    "scikit-learn==1.9.1",
+    "networkx==3.6.1",
+    "matplotlib==3.11.2",
+    "tqdm==4.70.1",
+    "simplification==1.0.0",
+    "ezdxf==1.4.4",
+    "py7zr==1.1.3",
+    "safetensors==0.8.0",
+    "huggingface-hub==1.31.0",
+]
+
+[project.optional-dependencies]
+# Only to rebuild the drawings from the raw ABC STEP files: OCP is the Open CASCADE kernel.
+abc = ["cadquery-ocp==8.0.1.0.0"]
+
+[project.scripts]
+eulercad = "eulercad.cli:main"
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.15.7"]
+
+[build-system]
+requires = ["uv_build>=0.11.1,<0.12.0"]
+build-backend = "uv_build"
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu130" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
