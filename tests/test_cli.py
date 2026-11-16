@@ -96,3 +96,32 @@ def test_model_download_fetches_the_weights_and_the_config_of_deep(monkeypatch) 
 def test_train_help_reaches_the_trainer(calls) -> None:
     cli.main(["train", "--help"])
     assert calls == [("pretrain", ["--help"])]
+
+
+def test_the_deep_sigreg_preset_fine_tunes_the_downloaded_deep_with_standardized_sigreg_on_every_layer(calls) -> None:
+    assert cli.main(["train", "--preset", "deep-sigreg"]) == 0
+    [(name, argv)] = calls
+    assert name == "pretrain"
+    assert argv[argv.index("--init-from") + 1] == "runs/deep/checkpoints/model.safetensors"
+    settings = {
+        "--sigreg-weight": "0.018",
+        "--sigreg-layers": "all",
+        "--total-steps": "20000",
+        "--warmup-steps": "250",
+        "--learning-rate": "3e-4",
+        "--schedule": "wsd",
+        "--wsd-decay-fraction": "0.5",
+        "--experiment": "deep-sigreg",
+    }
+    for option, value in settings.items():
+        assert argv[argv.index(option) + 1] == value
+    assert "--sigreg-raw" not in argv
+    assert [option for option in cli.DEEP if option.startswith("--") and option not in argv] == []
+
+
+def test_model_download_can_fetch_the_sigreg_fine_tune(monkeypatch) -> None:
+    seen = []
+    monkeypatch.setattr(hub, "hf_hub_download", lambda **kwargs: seen.append(kwargs) or "")
+    assert cli.main(["model", "download", "deep-sigreg"]) == 0
+    assert {call["repo_id"] for call in seen} == {"NicoloLocatelli/EulerCAD-Deep-SIGReg"}
+    assert all(Path(call["local_dir"]).parts[-3:] == ("runs", "deep-sigreg", "checkpoints") for call in seen)

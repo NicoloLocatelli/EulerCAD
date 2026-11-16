@@ -40,17 +40,18 @@ def export_checkpoint(checkpoint: Path, folder: Path) -> Path:
 
 
 MODEL_REPOSITORY = "NicoloLocatelli/EulerCAD-Deep"
+MODELS = {"deep": MODEL_REPOSITORY, "deep-sigreg": "NicoloLocatelli/EulerCAD-Deep-SIGReg"}
 DATASET_REPOSITORY = "NicoloLocatelli/EulerCAD-ABC-Preprocessed"
 
 
-def download_model(folder: Path) -> Path:
-    """Download Deep's weights and `config.json` into `folder`.
+def download_model(folder: Path, repository: str = MODEL_REPOSITORY) -> Path:
+    """Download a published model's weights and `config.json` into `folder`; Deep by default.
 
     Returns:
         The path of the weights.
     """
     for filename in (WEIGHTS_FILE, CONFIG_FILE):
-        hf_hub_download(repo_id=MODEL_REPOSITORY, filename=filename, local_dir=folder)
+        hf_hub_download(repo_id=repository, filename=filename, local_dir=folder)
     return folder / WEIGHTS_FILE
 
 

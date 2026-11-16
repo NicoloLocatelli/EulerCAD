@@ -2,9 +2,10 @@
 
     eulercad data download                  the preprocessed point graphs, from Hugging Face
     eulercad data build-abc --chunks 0-4    or rebuild them from the raw ABC STEP files (needs the abc extra)
-    eulercad model download                 Deep, from Hugging Face, into runs/deep/checkpoints/
+    eulercad model download [deep-sigreg]   Deep or its SIGReg fine-tune, from Hugging Face, into runs/<name>/checkpoints/
     eulercad model export <ckpt> <folder>   a training checkpoint in the published form
     eulercad train --preset deep            pretrain with the recipe of Deep; any other option is passed on
+    eulercad train --preset deep-sigreg     fine-tune the downloaded Deep with SIGReg
     eulercad analyze <checkpoint>           Layer by Layer measures, embeddings and retrieval of one split
     eulercad embed | retrieval | measures   one step of `analyze` alone, with all its options
 
@@ -60,7 +61,40 @@ DEEP = [
     "--warmup-steps", "1000", "--keep-checkpoints", "3", "--learning-rate", "1.2e-3", "--weight-decay", "0.1",
     "--schedule", "wsd_sqrt", "--final-learning-rate-ratio", "0",
 ]  # fmt: skip
-PRESETS = {"deep": DEEP}
+
+
+def _changed(options: list[str], changes: dict[str, str]) -> list[str]:
+    """Return `options` with the value after each option of `changes` replaced, and new options at the end.
+
+    Returns:
+        The new option list.
+    """
+    result = list(options)
+    for option, value in changes.items():
+        if option in result:
+            result[result.index(option) + 1] = value
+        else:
+            result += [option, value]
+    return result
+
+
+# The SIGReg fine-tune of Deep (thesis, Section 6.6): 20,000 more updates from Deep's weights, peak rate 3e-4
+# flat for half the run then linear to zero, loss (1 - 0.018) next-row + 0.018 SIGReg, standardized, on the
+# drawing means of the 14 layers and the final norm. Needs `eulercad model download` first.
+DEEP_SIGREG = _changed(
+    DEEP,
+    {
+        "--total-steps": "20000",
+        "--warmup-steps": "250",
+        "--learning-rate": "3e-4",
+        "--schedule": "wsd",
+        "--wsd-decay-fraction": "0.5",
+        "--init-from": "runs/deep/checkpoints/model.safetensors",
+        "--sigreg-weight": "0.018",
+        "--sigreg-layers": "all",
+    },
+)
+PRESETS = {"deep": DEEP, "deep-sigreg": DEEP_SIGREG}
 # The 20 projection directions of the thesis: four standard views and 16 random ones of seed 0.
 VIEWS = ["--views", "iso,front,top,left,rand16", "--seed", "0"]
 SPLITS = ("train", "val", "test")
@@ -110,7 +144,8 @@ def _parser() -> argparse.ArgumentParser:
     build.add_argument("--chunks", required=True, help="ABC archives of 10,000 objects; the thesis used 0-4")
 
     model = commands.add_parser("model", help="get or export a model").add_subparsers(dest="action", required=True)
-    model.add_parser("download", help="download Deep from Hugging Face into runs/deep/checkpoints/")
+    download = model.add_parser("download", help="download a published model into runs/<name>/checkpoints/")
+    download.add_argument("name", nargs="?", default="deep", choices=sorted(hub.MODELS))
     export = model.add_parser("export", help="write a training checkpoint as safetensors and config.json")
     export.add_argument("checkpoint", type=Path)
     export.add_argument("folder", type=Path)
@@ -146,7 +181,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "data":
         return _build_abc(args, rest)
     if args.command == "model" and args.action == "download":
-        hub.download_model(get_absolute_path("runs/deep/checkpoints"))
+        hub.download_model(get_absolute_path(f"runs/{args.name}/checkpoints"), hub.MODELS[args.name])
         return 0
     if args.command == "model":
         hub.export_checkpoint(get_absolute_path(args.checkpoint), get_absolute_path(args.folder))

@@ -12,7 +12,11 @@ The recipe adapts [GraphGPT](https://github.com/alibaba/graph-gpt) to drawings. 
 update 208,000.
 
 - Model: [NicoloLocatelli/EulerCAD-Deep](https://huggingface.co/NicoloLocatelli/EulerCAD-Deep)
+- Model fine-tuned with SIGReg: [NicoloLocatelli/EulerCAD-Deep-SIGReg](https://huggingface.co/NicoloLocatelli/EulerCAD-Deep-SIGReg)
 - Data: [NicoloLocatelli/EulerCAD-ABC-Preprocessed](https://huggingface.co/datasets/NicoloLocatelli/EulerCAD-ABC-Preprocessed)
+
+This is the code of the MSc thesis of Nicolò Locatelli at Politecnico di Milano. For an overview of the work and
+its results, read the six-page [executive summary](docs/Locatelli_Nicolo_Executive_Summary.pdf).
 
 ## Install
 
@@ -56,11 +60,26 @@ uv run eulercad data build-abc --chunks 0-4
 uv run eulercad model download
 ```
 
+**Deep-SIGReg** is Deep fine-tuned for 20,000 more updates with [SIGReg](https://arxiv.org/abs/2511.08544),
+a loss that pushes the drawing embeddings of every layer toward an isotropic Gaussian. Its next-row loss is
+slightly worse (0.7191), but its embeddings retrieve the other views of an object better on mean average
+precision. Download it into `runs/deep-sigreg/checkpoints/`:
+
+```bash
+uv run eulercad model download deep-sigreg
+```
+
 **3. Train.** Pretrain a model with the recipe of Deep. Any other option goes to the trainer, so you can
 change it, for example `--workers 8` or `--total-steps 40000`. `uv run eulercad train --help` lists them.
 
 ```bash
 uv run eulercad train --preset deep --experiment my_run
+```
+
+To repeat the SIGReg fine-tune, download Deep first (step 2), then run:
+
+```bash
+uv run eulercad train --preset deep-sigreg
 ```
 
 The run writes `runs/my_run/`: `run.json` (what the run is), `training.jsonl` (the losses), and
@@ -73,6 +92,7 @@ rank, InfoNCE, LiDAR, DiME), then embed the whole split and score retrieval of t
 
 ```bash
 uv run eulercad analyze runs/deep/checkpoints/model.safetensors --split val
+uv run eulercad analyze runs/deep-sigreg/checkpoints/model.safetensors --split val
 uv run eulercad analyze runs/my_run/checkpoints/best.ckpt --split val
 ```
 
