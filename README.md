@@ -11,6 +11,9 @@ The recipe adapts [GraphGPT](https://github.com/alibaba/graph-gpt) to drawings. 
 208,200 updates of 160 drawings, on 246,108 training drawings. Its best validation loss is 0.7144, at
 update 208,000.
 
+- Model: [NicoloLocatelli/EulerCAD-Deep](https://huggingface.co/NicoloLocatelli/EulerCAD-Deep)
+- Data: [NicoloLocatelli/EulerCAD-ABC-Preprocessed](https://huggingface.co/datasets/NicoloLocatelli/EulerCAD-ABC-Preprocessed)
+
 ## Install
 
 You need Python 3.12, [uv](https://docs.astral.sh/uv/), and an NVIDIA GPU with a CUDA 13 driver for
@@ -30,7 +33,8 @@ To rebuild the dataset from the raw ABC files you also need the Open CASCADE ker
 Run every command from the repository folder. Data go to `data/`, runs to `runs/`, and analyses to
 `outputs/`. To keep them elsewhere, set `EULERCAD_HOME`.
 
-**1. Get the data.** Download the preprocessed point graphs (about 3.3 GB):
+**1. Get the data.** Download the preprocessed point graphs (about 3.3 GB) from
+[EulerCAD-ABC-Preprocessed](https://huggingface.co/datasets/NicoloLocatelli/EulerCAD-ABC-Preprocessed):
 
 ```bash
 uv run eulercad data download
@@ -45,7 +49,8 @@ uv sync --extra abc
 uv run eulercad data build-abc --chunks 0-4
 ```
 
-**2. Get the model.** Download Deep into `runs/deep/checkpoints/`:
+**2. Get the model.** Download [Deep](https://huggingface.co/NicoloLocatelli/EulerCAD-Deep) into
+`runs/deep/checkpoints/`:
 
 ```bash
 uv run eulercad model download
