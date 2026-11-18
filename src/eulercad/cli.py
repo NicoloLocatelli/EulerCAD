@@ -5,6 +5,7 @@
     eulercad model download [deep-sigreg]   Deep or its SIGReg fine-tune, from Hugging Face, into runs/<name>/checkpoints/
     eulercad model export <ckpt> <folder>   a training checkpoint in the published form
     eulercad train --preset deep            pretrain with the recipe of Deep; any other option is passed on
+    eulercad train --preset deep-small-test-run   the same recipe at width 128 for 20,000 updates
     eulercad train --preset deep-sigreg     fine-tune the downloaded Deep with SIGReg
     eulercad analyze <checkpoint>           Layer by Layer measures, embeddings and retrieval of one split
     eulercad embed | retrieval | measures   one step of `analyze` alone, with all its options
@@ -104,7 +105,14 @@ DEEP_SIGREG = _changed(
         "--sigreg-layers": "all",
     },
 )
-PRESETS = {"deep": DEEP, "deep-sigreg": DEEP_SIGREG}
+# A light test run of Deep's recipe: width 128 (2 heads of 64) for 20,000 updates, a run of the scaling
+# study (thesis, Section 6.6) with the rate it found best at that length. Validation 1.0033 after about
+# 1 h 20 min on an RTX 4060 Ti, against Deep's 0.7144.
+DEEP_SMALL_TEST_RUN = _changed(
+    DEEP,
+    {"--hidden-size": "128", "--attention-heads": "2", "--total-steps": "20000", "--learning-rate": "2.0e-3"},
+)
+PRESETS = {"deep": DEEP, "deep-small-test-run": DEEP_SMALL_TEST_RUN, "deep-sigreg": DEEP_SIGREG}
 # The 20 projection directions of the thesis: four standard views and 16 random ones of seed 0.
 VIEWS = ["--views", "iso,front,top,left,rand16", "--seed", "0"]
 SPLITS = ("train", "val", "test")

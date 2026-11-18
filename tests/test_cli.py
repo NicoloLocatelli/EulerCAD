@@ -119,6 +119,24 @@ def test_the_deep_sigreg_preset_fine_tunes_the_downloaded_deep_with_standardized
     assert [option for option in cli.DEEP if option.startswith("--") and option not in argv] == []
 
 
+def test_the_deep_small_test_run_preset_is_deep_at_width_128_on_the_short_schedule_of_the_scaling_study(calls) -> None:
+    assert cli.main(["train", "--preset", "deep-small-test-run"]) == 0
+    [(name, argv)] = calls
+    assert name == "pretrain"
+    settings = {
+        "--scale": "deep",
+        "--hidden-size": "128",
+        "--attention-heads": "2",
+        "--total-steps": "20000",
+        "--learning-rate": "2.0e-3",
+        "--experiment": "deep-small-test-run",
+    }
+    for option, value in settings.items():
+        assert argv[argv.index(option) + 1] == value
+    assert "--init-from" not in argv
+    assert [option for option in cli.DEEP if option.startswith("--") and option not in argv] == []
+
+
 def test_model_download_can_fetch_the_sigreg_fine_tune(monkeypatch) -> None:
     seen = []
     monkeypatch.setattr(hub, "hf_hub_download", lambda **kwargs: seen.append(kwargs) or "")

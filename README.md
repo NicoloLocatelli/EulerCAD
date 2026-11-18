@@ -76,6 +76,14 @@ change it, for example `--workers 8` or `--total-steps 40000`. `uv run eulercad 
 uv run eulercad train --preset deep --experiment my_run
 ```
 
+For a lighter test of the whole pipeline, `deep-small-test-run` uses the same recipe at width 128 (4.3M
+parameters) for 20,000 updates. On one RTX 4060 Ti it took about 1 hour 20 minutes and reached a
+validation loss of 1.0033.
+
+```bash
+uv run eulercad train --preset deep-small-test-run
+```
+
 To repeat the SIGReg fine-tune, download Deep first (step 2), then run:
 
 ```bash
@@ -99,6 +107,68 @@ uv run eulercad analyze runs/my_run/checkpoints/best.ckpt --split val
 The results go to `outputs/<run>/`: `layers_<checkpoint>_<split>/` holds `metrics.json` and one plot per
 measure, and `embeddings_<checkpoint>/` holds the embeddings and `retrieval.json`. Each step also runs
 alone, with all its options: `uv run eulercad measures --help`, `embed --help`, `retrieval --help`.
+
+## The `eulercad` command
+
+`uv sync` installs one command, `eulercad`. Run it as `uv run eulercad <command>`, from the repository
+folder. Add `--help` to any command to see its options.
+
+| Command | What it does |
+|---|---|
+| `data download` | Download the preprocessed point graphs into `data/ABC/`. |
+| `data build-abc --chunks 0-4` | Rebuild them from raw ABC instead. Needs `uv sync --extra abc`. Other options go to the projection step. |
+| `model download [deep\|deep-sigreg]` | Download a published model into `runs/<name>/checkpoints/`. The default is `deep`. |
+| `model export <checkpoint> <folder>` | Write a training checkpoint as `model.safetensors` and `config.json`, the form of the published models. |
+| `train [--preset <name>] [options]` | Pretrain or fine-tune a model. |
+| `analyze <checkpoint> [--split val] [--no-retrieval]` | Measure every layer, then embed the split and score retrieval. |
+| `measures`, `embed`, `retrieval` | Run one step of `analyze` alone. |
+
+### Training
+
+A preset is a full recipe. Any option you add after it replaces the preset's value, so
+`train --preset deep --total-steps 40000` is Deep's recipe with 40,000 updates.
+
+| Preset | What it trains |
+|---|---|
+| `deep` | Deep: width 384, 14 layers, 208,200 updates. |
+| `deep-small-test-run` | The same recipe at width 128 for 20,000 updates, to test the pipeline. |
+| `deep-sigreg` | Deep fine-tuned with SIGReg for 20,000 updates. Needs `model download` first. |
+
+Without a preset you give every option yourself, and `--experiment` and `--total-steps` are required.
+`uv run eulercad train --help` lists all the options. These are the ones you will most likely change:
+
+- `--experiment <name>`: the run folder, `runs/<name>/`. The default is the preset's name.
+- `--workers <n>`: processes that build the batches (default 14). Use fewer on a machine with fewer
+  CPU cores. The batches stay the same.
+- `--max-steps <n>`: stop after `n` updates. The learning-rate schedule still follows `--total-steps`.
+- `--cell-budget <n>`: the batch runs in groups of at most `n` rows times drawings. If the GPU runs out of
+  memory, lower it. The presets have no dropout, so the loss and the gradients stay the same.
+- `--resume`: continue a stopped run from `last.ckpt`. Repeat the original command and add `--resume`.
+- `--print-config`: print the settings the run would use, and exit.
+
+A run writes `runs/<experiment>/`:
+
+- `run.json`: the settings of the run.
+- `training.jsonl`: the training and validation losses.
+- `checkpoints/`: `best.ckpt` (the lowest validation loss so far), `last.ckpt` (the latest), and the last
+  few step checkpoints.
+
+### Analysis
+
+`analyze` takes either a downloaded `model.safetensors` or a `.ckpt` of your own run. `--split` picks
+`train`, `val` (the default) or `test`. `--no-retrieval` skips the embeddings and the retrieval.
+Any other option goes to the measures step, for example `--drawings 500` to measure fewer
+drawings. Every step uses the GPU when there is one, and the CPU otherwise.
+
+### Paths
+
+Every relative path, such as `data/`, `runs/` and `outputs/`, is resolved under the folder in
+`EULERCAD_HOME`. Without it, they are resolved under the current folder. For example, to keep the data and
+runs on another disk:
+
+```bash
+export EULERCAD_HOME=/mnt/big_disk/eulercad
+```
 
 ## Layout
 
