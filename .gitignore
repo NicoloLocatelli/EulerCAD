@@ -6,7 +6,7 @@ __pycache__/
 .ruff_cache/
 
 # Data, checkpoints and outputs: downloaded or produced by the commands, never committed
-data/
+/data/
 runs/
 outputs/
 checkpoints/
