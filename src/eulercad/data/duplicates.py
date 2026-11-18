@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import torch
+
 from eulercad.abc.point_graph import PointGraphDataset
 from eulercad.data.drawings import read_drawing
 from eulercad.representation.euler import eulerize

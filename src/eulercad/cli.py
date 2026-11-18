@@ -14,12 +14,22 @@ Every relative path resolves under `$EULERCAD_HOME`, or the current folder.
 
 import argparse
 import importlib
+import logging
 import sys
+import warnings
 from collections.abc import Callable
 from pathlib import Path
 
-from eulercad import hub
-from eulercad.paths import get_absolute_path
+# Two deprecation notices about library code, not ours, silenced before any library loads:
+# torch_geometric 2.8 still calls `torch.jit.script`, and torchao (which transformers imports
+# whenever it is installed) still registers its enums with torch's pytree.
+warnings.filterwarnings("ignore", message=r"`torch\.jit\.script` is deprecated", category=FutureWarning)
+logging.getLogger("torch.utils._pytree").addFilter(
+    lambda record: "is an Enum subclass and is now natively supported" not in record.getMessage()
+)
+
+from eulercad import hub  # noqa: E402  (after the filters above, on purpose)
+from eulercad.paths import get_absolute_path  # noqa: E402
 
 DATASET = "data/ABC/point_graph_dataset"
 OUTPUTS = "outputs"

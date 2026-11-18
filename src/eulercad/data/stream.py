@@ -10,9 +10,10 @@ import itertools
 import random
 from collections.abc import Iterator
 
+from torch.utils.data import IterableDataset, get_worker_info
+
 from eulercad.data.collate import MAX_ROWS, Batch, collate
 from eulercad.data.dataset import DrawingDataset
-from torch.utils.data import IterableDataset, get_worker_info
 
 
 class TrainingStream(IterableDataset[Batch]):

@@ -8,13 +8,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import torch
+from torch.utils.data import Dataset
+
 from eulercad.abc.point_graph import PointGraphDataset
 from eulercad.data.drawings import read_drawing
 from eulercad.data.duplicates import DuplicateTable
 from eulercad.data.sample import Sample, next_row_labels, sample_rng, suffix_labels
 from eulercad.representation.euler import euler_walk
 from eulercad.tokenization.tokenizer import GraphTokenizer
-from torch.utils.data import Dataset
 
 
 class DrawingDataset(Dataset[Sample]):

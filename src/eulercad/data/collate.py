@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 import torch
+
 from eulercad.data.sample import IGNORED_LABEL, Sample
 from eulercad.tokenization.vocabulary import PAD
 

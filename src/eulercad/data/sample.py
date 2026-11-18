@@ -9,6 +9,7 @@ import random
 from dataclasses import dataclass
 
 import torch
+
 from eulercad.tokenization.vocabulary import EOS
 
 STREAM = "next_row"
